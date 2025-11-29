@@ -1,2 +1,2 @@
-# agentic_shoppung_assistant
+# agentic_shopping_assistant
 ai project
