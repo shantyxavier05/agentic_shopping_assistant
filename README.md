@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛒 Agentic Shopping Assistant
 
 A comprehensive AI-powered shopping assistant system with three intelligent agents that manage inventory, suggest recipes, and generate shopping lists. Features voice assistant capabilities with speech-to-text and text-to-speech support.
@@ -504,3 +505,7 @@ Agentic Shopping Assistant System
 
 
 
+=======
+# agentic_shopping_assistant
+ai project
+>>>>>>> 1f1bc1768e2f35c52fe82c905e97ddf729dadec0
