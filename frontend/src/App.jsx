@@ -4,7 +4,7 @@ import InventoryList from './components/InventoryList'
 import RecipeSuggestion from './components/RecipeSuggestion'
 import ShoppingList from './components/ShoppingList'
 import VoiceAssistant from './components/VoiceAssistant'
-import { fetchInventory, fetchShoppingList, suggestRecipe } from './services/api'
+import { fetchInventory, fetchShoppingList } from './services/api'
 
 function App() {
   const [inventory, setInventory] = useState([])
@@ -40,17 +40,9 @@ function App() {
     }
   }
 
-  const handleRecipeSuggestion = async () => {
-    try {
-      setLoading(true)
-      const data = await suggestRecipe()
-      setRecipe(data.recipe)
-      setActiveTab('recipe')
-    } catch (error) {
-      console.error('Error suggesting recipe:', error)
-    } finally {
-      setLoading(false)
-    }
+  const handleRecipeSuggestion = (recipeData) => {
+    setRecipe(recipeData)
+    setActiveTab('recipe')
   }
 
   const handleInventoryUpdate = () => {
@@ -122,6 +114,11 @@ function App() {
 }
 
 export default App
+
+
+
+
+
 
 
 

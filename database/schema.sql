@@ -22,3 +22,9 @@ CREATE INDEX IF NOT EXISTS idx_inventory_name ON inventory(name);
 
 
 
+
+
+
+
+
+

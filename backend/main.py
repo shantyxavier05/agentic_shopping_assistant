@@ -9,6 +9,10 @@ import sys
 import os
 from typing import Dict, List, Optional
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -57,6 +61,11 @@ voice_assistant = VoiceAssistant(db_helper, planner_agent, inventory_agent, shop
 class RecipeRequest(BaseModel):
     preferences: Optional[str] = None
     servings: Optional[int] = 4
+
+
+class ApplyRecipeRequest(BaseModel):
+    recipe_name: str
+    servings: Optional[int] = None  # Optional: how many people to cook for
 
 
 class InventoryUpdate(BaseModel):
@@ -138,16 +147,11 @@ async def suggest_recipe(request: RecipeRequest):
 
 
 @app.post("/api/planner/apply-recipe")
-async def apply_recipe(request: Dict):
-    """Apply a recipe and update inventory"""
+async def apply_recipe(request: ApplyRecipeRequest):
+    """Apply a recipe and update inventory with optional scaling"""
     try:
-        recipe_name = request.get("recipe_name")
-        if not recipe_name:
-            raise HTTPException(status_code=400, detail="recipe_name is required")
-        result = planner_agent.apply_recipe(recipe_name)
+        result = planner_agent.apply_recipe(request.recipe_name, request.servings)
         return {"message": "Recipe applied successfully", "result": result}
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error applying recipe: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

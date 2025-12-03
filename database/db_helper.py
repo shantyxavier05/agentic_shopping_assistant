@@ -82,14 +82,14 @@ class DatabaseHelper:
             raise
     
     def get_item(self, name: str) -> Optional[Dict]:
-        """Get an item by name"""
+        """Get an item by name (case-insensitive)"""
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT id, name, quantity, unit, created_at, updated_at
                     FROM inventory
-                    WHERE name = ?
+                    WHERE LOWER(name) = LOWER(?)
                 """, (name,))
                 row = cursor.fetchone()
                 
@@ -106,6 +106,53 @@ class DatabaseHelper:
                 
         except Exception as e:
             logger.error(f"Error getting item: {str(e)}")
+            raise
+    
+    def find_item_fuzzy(self, name: str) -> Optional[Dict]:
+        """Find item using fuzzy matching (case-insensitive, partial match)"""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                # Try exact match first (case-insensitive)
+                cursor.execute("""
+                    SELECT id, name, quantity, unit, created_at, updated_at
+                    FROM inventory
+                    WHERE LOWER(name) = LOWER(?)
+                """, (name,))
+                row = cursor.fetchone()
+                
+                if row:
+                    return {
+                        "id": row["id"],
+                        "name": row["name"],
+                        "quantity": row["quantity"],
+                        "unit": row["unit"],
+                        "created_at": row["created_at"],
+                        "updated_at": row["updated_at"]
+                    }
+                
+                # Try partial match (name contains the search term or vice versa)
+                cursor.execute("""
+                    SELECT id, name, quantity, unit, created_at, updated_at
+                    FROM inventory
+                    WHERE LOWER(name) LIKE LOWER(?) OR LOWER(?) LIKE LOWER('%' || name || '%')
+                """, (f'%{name}%', name))
+                row = cursor.fetchone()
+                
+                if row:
+                    return {
+                        "id": row["id"],
+                        "name": row["name"],
+                        "quantity": row["quantity"],
+                        "unit": row["unit"],
+                        "created_at": row["created_at"],
+                        "updated_at": row["updated_at"]
+                    }
+                
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error finding item: {str(e)}")
             raise
     
     def get_all_inventory(self) -> List[Dict]:

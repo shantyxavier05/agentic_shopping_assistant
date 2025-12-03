@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from database.db_helper import DatabaseHelper
 from backend.llm.llm_client import LLMClient
+from backend.agents.recipe_application_agent import RecipeApplicationAgent
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class PlannerAgent:
         self.db_helper = db_helper
         self.llm_client = LLMClient()
         self.recipe_cache: Dict[str, Dict] = {}
+        self.recipe_app_agent = RecipeApplicationAgent(db_helper)
     
     def suggest_recipe(self, preferences: Optional[str] = None, servings: int = 4) -> Dict:
         """
@@ -96,12 +98,13 @@ Format your response as JSON with the following structure:
                 "instructions": []
             }
     
-    def apply_recipe(self, recipe_name: str) -> Dict:
+    def apply_recipe(self, recipe_name: str, servings: Optional[int] = None) -> Dict:
         """
-        Apply a recipe (remove ingredients from inventory)
+        Apply a recipe (remove ingredients from inventory) with optional scaling
         
         Args:
             recipe_name: Name of the recipe to apply
+            servings: Number of people to cook for (if None, uses recipe's original servings)
             
         Returns:
             Dictionary with result of applying recipe
@@ -114,25 +117,17 @@ Format your response as JSON with the following structure:
                 }
             
             recipe = self.recipe_cache[recipe_name]
-            used_items = []
+            original_servings = recipe.get('servings', 4)
             
-            # Remove ingredients from inventory
-            for ingredient in recipe.get("ingredients", []):
-                try:
-                    self.db_helper.reduce_quantity(
-                        ingredient["name"],
-                        ingredient.get("quantity", 0)
-                    )
-                    used_items.append(ingredient["name"])
-                except Exception as e:
-                    logger.warning(f"Could not remove {ingredient['name']}: {str(e)}")
+            # Use Recipe Application Agent to apply with scaling
+            result = self.recipe_app_agent.apply_recipe(
+                recipe=recipe,
+                servings=servings,
+                original_servings=original_servings
+            )
             
-            logger.info(f"Applied recipe: {recipe_name}, used items: {used_items}")
-            return {
-                "success": True,
-                "message": f"Recipe '{recipe_name}' applied successfully",
-                "used_items": used_items
-            }
+            logger.info(f"Applied recipe: {recipe_name} for {servings or original_servings} people")
+            return result
             
         except Exception as e:
             logger.error(f"Error applying recipe: {str(e)}")

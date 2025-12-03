@@ -41,9 +41,10 @@ export const suggestRecipe = async (preferences = null, servings = 4) => {
   return response.data
 }
 
-export const applyRecipe = async (recipeName) => {
+export const applyRecipe = async (recipeName, servings = null) => {
   const response = await api.post('/api/planner/apply-recipe', {
-    recipe_name: recipeName
+    recipe_name: recipeName,
+    servings: servings
   })
   return response.data
 }
